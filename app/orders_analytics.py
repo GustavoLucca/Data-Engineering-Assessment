@@ -30,7 +30,7 @@ def calculate_profit_by_order(orders_df):
     gross_revenue = (
         profit_by_order["List Price"].astype(float)
         * profit_by_order["Quantity"].astype(float)
-        * discount_multiplier
+        * discount_multiplier # This is functionally equivalent to Sale Price
     )
     total_cost = (
         profit_by_order["cost price"].astype(float)

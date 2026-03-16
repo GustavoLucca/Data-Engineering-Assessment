@@ -23,6 +23,34 @@ resource "aws_iam_role_policy_attachment" "lambda_logging" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# least-privilege IAM policy
+resource "aws_iam_role_policy" "lambda_s3_access" {
+  name = "${var.lambda_name}-s3-access"
+  role = aws_iam_role.lambda_exec_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "ReadInputObjects",
+        Effect = "Allow",
+        Action = ["s3:GetObject"],
+        Resource = [
+          "${var.input_bucket_arn}/*"
+        ]
+      },
+      {
+        Sid    = "WriteOutputObjects",
+        Effect = "Allow",
+        Action = ["s3:PutObject"],
+        Resource = [
+          "${var.output_bucket_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
   name              = "/aws/lambda/${var.lambda_name}"
@@ -35,13 +63,13 @@ resource "aws_lambda_function" "lambda_function" {
   role          = aws_iam_role.lambda_exec_role.arn
   package_type  = "Image"
   image_uri     = var.image_uri
-  
+
   image_config {
-    command = ["lambda.lambda_handler" ]
+    command = ["lambda.lambda_handler"]
   }
-  
-  timeout       = var.timeout
-  memory_size   = var.memory_size
+
+  timeout     = var.timeout
+  memory_size = var.memory_size
 
   environment {
     variables = var.environment_variables

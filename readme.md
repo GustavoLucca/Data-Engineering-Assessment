@@ -41,6 +41,8 @@ Run tests from repo root:
 python -m unittest discover -s app/tests -p "test_*.py"
 ```
 
+The suite now includes mocked Lambda integration tests in [app/tests/test_lambda.py](app/tests/test_lambda.py), which validate S3 event parsing and S3 read/write behavior without requiring live AWS infrastructure.
+
 Covered assertions:
 - Most profitable region result and profit value.
 - Most common ship method per category including tie behavior.

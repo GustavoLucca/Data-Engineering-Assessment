@@ -4,8 +4,8 @@
 resource "aws_s3_bucket" "input_s3" {
   bucket = "${local.app_name}-input-bucket"
   tags = merge({
-        Name        = "${local.app_name}-input-bucket"
-        Environment = "${var.env}"
+    Name        = "${local.app_name}-input-bucket"
+    Environment = "${var.env}"
     }, local.default_tags
   )
   force_destroy = true
@@ -14,31 +14,34 @@ resource "aws_s3_bucket" "input_s3" {
 resource "aws_s3_bucket" "output_s3" {
   bucket = "${local.app_name}-output-bucket"
   tags = merge({
-        Name        = "${local.app_name}-output-bucket"
-        Environment = "${var.env}"
+    Name        = "${local.app_name}-output-bucket"
+    Environment = "${var.env}"
     }, local.default_tags
   )
   force_destroy = true
 }
 
 module "lambda_function" {
-  source                  = "../modules/lambda"
-  lambda_name             = "${local.app_name}-file-processor"
-  role_name               = "${local.app_name}-file-processor-role"
-  log_retention_in_days   = 14
-  image_uri               = "${module.ecr_repo.repository_url}:latest"
-  timeout                 = 15
-  memory_size             = 256
-  environment_variables   = {
-    EXAMPLE_VAR = "value"
+  source                = "../modules/lambda"
+  lambda_name           = "${local.app_name}-file-processor"
+  role_name             = "${local.app_name}-file-processor-role"
+  log_retention_in_days = 14
+  image_uri             = "${module.ecr_repo.repository_url}:latest"
+  timeout               = 15
+  memory_size           = 256
+  environment_variables = {
+    OUTPUT_BUCKET = aws_s3_bucket.output_s3.bucket
+    OUTPUT_PREFIX = "analytics"
   }
+  input_bucket_arn  = aws_s3_bucket.input_s3.arn
+  output_bucket_arn = aws_s3_bucket.output_s3.arn
 
   default_tags = local.default_tags
 }
 
 module "ecr_repo" {
-  source    = "../modules/ecr-repo"
-  repo_name = "${local.app_name}-ecr"
+  source       = "../modules/ecr-repo"
+  repo_name    = "${local.app_name}-ecr"
   default_tags = local.default_tags
 }
 
@@ -47,7 +50,7 @@ resource "aws_lambda_permission" "allow_bucket" {
   action        = "lambda:InvokeFunction"
   function_name = module.lambda_function.lambda_arn
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.input_s3.id
+  source_arn    = aws_s3_bucket.input_s3.arn
 }
 
 resource "aws_s3_bucket_notification" "s3_notification" {
@@ -55,7 +58,8 @@ resource "aws_s3_bucket_notification" "s3_notification" {
   lambda_function {
     lambda_function_arn = module.lambda_function.lambda_arn
     events              = ["s3:ObjectCreated:*"]
-    filter_prefix       = "*"
     filter_suffix       = ".csv"
   }
+
+  depends_on = [aws_lambda_permission.allow_bucket]
 }

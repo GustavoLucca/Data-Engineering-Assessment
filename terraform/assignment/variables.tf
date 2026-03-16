@@ -1,11 +1,11 @@
 variable "aws_profile" {
   description = "aws profile to use"
-  type = string
+  type        = string
 }
 
 variable "region_name" {
   default = "us-west-2"
-  type = string
+  type    = string
 }
 
 variable "candidate_name" {
@@ -13,10 +13,10 @@ variable "candidate_name" {
 }
 
 variable "env" {
-  type = string
+  type    = string
   default = "dev"
 }
 
 variable "project" {
-    type = string
+  type = string
 }

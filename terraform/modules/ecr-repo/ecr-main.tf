@@ -4,6 +4,6 @@ resource "aws_ecr_repository" "lambda_repo" {
 
   tags = var.default_tags
 
-  force_delete         = true
+  force_delete = true
 }
 
