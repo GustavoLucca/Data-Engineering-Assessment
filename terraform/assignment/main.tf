@@ -11,6 +11,16 @@ resource "aws_s3_bucket" "input_s3" {
   force_destroy = true
 }
 
+resource "aws_s3_bucket" "output_s3" {
+  bucket = "${local.app_name}-output-bucket"
+  tags = merge({
+        Name        = "${local.app_name}-output-bucket"
+        Environment = "${var.env}"
+    }, local.default_tags
+  )
+  force_destroy = true
+}
+
 module "lambda_function" {
   source                  = "../modules/lambda"
   lambda_name             = "${local.app_name}-file-processor"
